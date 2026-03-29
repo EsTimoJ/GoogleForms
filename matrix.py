@@ -248,6 +248,7 @@ class AnswerGenerator:
         score = _clamp(score, 1.0, 3.0)
 
         # Map score [1, 3] to probability of correct answer [0.25, 0.90]
+        # slope = (0.90 - 0.25) / (3 - 1) = 0.325
         p_correct = 0.25 + (score - 1.0) * 0.325
 
         if random.random() < p_correct:

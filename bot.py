@@ -183,7 +183,7 @@ class FormFiller:
             return f"'{text}'"
         if '"' not in text:
             return f'"{text}"'
-        # Contains both — use concat()
+        # Contains both — use concat(), e.g. "it's \"ok\"" → concat('it',"'",'s "ok"')
         parts = text.split("'")
         return "concat(" + ",\"'\",".join(f"'{p}'" for p in parts) + ")"
 
