@@ -446,7 +446,7 @@ questions:
       "under-800":  "iki 800 eurų"
       "801-1500":   "801 - 1500 eurų"
       "1501-2500":  "1501 - 2500 eurų"
-      "2500-4000":  "2500 - 4000 eurų"
+      "2500-4000":  "2500 - 4000 eurų"      # form text starts at 2500, not 2501
       "4000+":      "daugiau nei 4000 eurų"
       "nenoriu":    "Nenoriu atsakyti"
 

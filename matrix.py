@@ -247,8 +247,8 @@ class AnswerGenerator:
         score = mean + random.uniform(-jitter * mean, jitter * mean)
         score = _clamp(score, 1.0, 3.0)
 
-        # Map score to probability of correct answer: 1→0.25, 3→0.90
-        p_correct = 0.25 + (score - 1.0) * (0.65 / 2.0)
+        # Map score [1, 3] to probability of correct answer [0.25, 0.90]
+        p_correct = 0.25 + (score - 1.0) * 0.325
 
         if random.random() < p_correct:
             return correct
