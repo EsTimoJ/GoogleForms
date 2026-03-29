@@ -6,8 +6,7 @@
 # 1. Target Form
 # ---------------------------------------------------------------------------
 form:
-  # Full URL of the Google Form to fill
-  url: "https://docs.google.com/forms/d/YOUR_FORM_ID/viewform"
+  url: "https://docs.google.com/forms/d/e/1FAIpQLSc6GadCexj2RhgN-SxkgUNMxx_wPQxk8hNP9JkWQpLcertK5w/viewform"
 
 # ---------------------------------------------------------------------------
 # 2. Submission Rate
@@ -92,16 +91,36 @@ matrix:
       over_five_years: 2
     risk_options:
       no_risk: 1
-      below_average: 1
       average: 4
       above_average: 3
       high: 1
     drop_options:
-      sell_all: 1
-      sell_some: 1
+      sell: 2
       hold: 3
       buy_more: 4
     literacy_mean: 2.08
+    education_options:
+      pradinis: 0
+      vidurinis: 3
+      profesinis: 2
+      aukstasis_koleginis: 3
+      aukstasis_universitetinis: 2
+    employment_options:
+      dirbantis: 3
+      studentas: 5
+      bedarbis: 1
+      pensininkas: 0
+      kita: 1
+    risk_agreement_options:
+      visiskai_nesutinku: 1
+      nesutinku: 1
+      nei_nei: 3
+      sutinku: 4
+      visiskai_sutinku: 1
+    social_trust_mean: 5.5
+    fin_trust_mean: 3.0
+    happiness_mean: 6.5
+    life_satisfaction_mean: 6.5
 
   - id: young_low_income          # Profile 2 — Low-income Bold Young
     label: "18–24 / under €800"
@@ -116,16 +135,36 @@ matrix:
       over_five_years: 1
     risk_options:
       no_risk: 1
-      below_average: 1
       average: 3
       above_average: 4
       high: 1
     drop_options:
-      sell_all: 1
-      sell_some: 1
+      sell: 2
       hold: 5
       buy_more: 3
     literacy_mean: 2.17
+    education_options:
+      pradinis: 0
+      vidurinis: 4
+      profesinis: 3
+      aukstasis_koleginis: 2
+      aukstasis_universitetinis: 1
+    employment_options:
+      dirbantis: 2
+      studentas: 6
+      bedarbis: 1
+      pensininkas: 0
+      kita: 1
+    risk_agreement_options:
+      visiskai_nesutinku: 1
+      nesutinku: 1
+      nei_nei: 2
+      sutinku: 4
+      visiskai_sutinku: 2
+    social_trust_mean: 5.0
+    fin_trust_mean: 2.8
+    happiness_mean: 6.0
+    life_satisfaction_mean: 5.8
 
   - id: emerging_investor         # Profile 3 — Emerging Stable Investor
     label: "25–34 / €1501–2500"
@@ -140,16 +179,36 @@ matrix:
       over_five_years: 3
     risk_options:
       no_risk: 1
-      below_average: 1
       average: 5
       above_average: 3
       high: 0
     drop_options:
-      sell_all: 0
-      sell_some: 1
+      sell: 1
       hold: 4
       buy_more: 4
     literacy_mean: 2.50
+    education_options:
+      pradinis: 0
+      vidurinis: 1
+      profesinis: 2
+      aukstasis_koleginis: 4
+      aukstasis_universitetinis: 5
+    employment_options:
+      dirbantis: 7
+      studentas: 1
+      bedarbis: 1
+      pensininkas: 0
+      kita: 1
+    risk_agreement_options:
+      visiskai_nesutinku: 1
+      nesutinku: 1
+      nei_nei: 3
+      sutinku: 4
+      visiskai_sutinku: 1
+    social_trust_mean: 5.2
+    fin_trust_mean: 3.2
+    happiness_mean: 7.0
+    life_satisfaction_mean: 7.0
 
   - id: mature_investor           # Profile 4 — Mature Confident Investor
     label: "35–44 / €1501–2500"
@@ -164,16 +223,36 @@ matrix:
       over_five_years: 5
     risk_options:
       no_risk: 0
-      below_average: 1
       average: 3
       above_average: 5
       high: 1
     drop_options:
-      sell_all: 0
-      sell_some: 1
+      sell: 1
       hold: 5
       buy_more: 4
     literacy_mean: 2.80
+    education_options:
+      pradinis: 0
+      vidurinis: 1
+      profesinis: 2
+      aukstasis_koleginis: 3
+      aukstasis_universitetinis: 6
+    employment_options:
+      dirbantis: 8
+      studentas: 0
+      bedarbis: 1
+      pensininkas: 0
+      kita: 1
+    risk_agreement_options:
+      visiskai_nesutinku: 0
+      nesutinku: 1
+      nei_nei: 2
+      sutinku: 5
+      visiskai_sutinku: 2
+    social_trust_mean: 5.5
+    fin_trust_mean: 3.5
+    happiness_mean: 7.2
+    life_satisfaction_mean: 7.3
 
   - id: cautious_mid_career       # Profile 5 — Cautious Mid-career Non-investor
     label: "35–44 / €801–1500"
@@ -188,16 +267,36 @@ matrix:
       over_five_years: 2
     risk_options:
       no_risk: 5
-      below_average: 3
       average: 2
       above_average: 0
       high: 0
     drop_options:
-      sell_all: 1
-      sell_some: 1
+      sell: 2
       hold: 7
       buy_more: 1
     literacy_mean: 2.29
+    education_options:
+      pradinis: 1
+      vidurinis: 3
+      profesinis: 3
+      aukstasis_koleginis: 2
+      aukstasis_universitetinis: 1
+    employment_options:
+      dirbantis: 6
+      studentas: 0
+      bedarbis: 2
+      pensininkas: 0
+      kita: 2
+    risk_agreement_options:
+      visiskai_nesutinku: 3
+      nesutinku: 4
+      nei_nei: 2
+      sutinku: 1
+      visiskai_sutinku: 0
+    social_trust_mean: 4.5
+    fin_trust_mean: 2.5
+    happiness_mean: 6.0
+    life_satisfaction_mean: 5.8
 
   - id: older_mixed_investor      # Profile 6 — Older Mixed / Mid
     label: "45–54 / €1501–2500"
@@ -212,16 +311,36 @@ matrix:
       over_five_years: 5
     risk_options:
       no_risk: 1
-      below_average: 1
       average: 3
       above_average: 5
       high: 0
     drop_options:
-      sell_all: 0
-      sell_some: 1
+      sell: 1
       hold: 3
       buy_more: 5
     literacy_mean: 2.67
+    education_options:
+      pradinis: 0
+      vidurinis: 2
+      profesinis: 2
+      aukstasis_koleginis: 3
+      aukstasis_universitetinis: 5
+    employment_options:
+      dirbantis: 7
+      studentas: 0
+      bedarbis: 1
+      pensininkas: 1
+      kita: 1
+    risk_agreement_options:
+      visiskai_nesutinku: 0
+      nesutinku: 1
+      nei_nei: 2
+      sutinku: 5
+      visiskai_sutinku: 2
+    social_trust_mean: 5.0
+    fin_trust_mean: 3.3
+    happiness_mean: 6.8
+    life_satisfaction_mean: 7.0
 
   - id: older_conservative        # Profile 7 — Older Conservative Mainstream
     label: "45–54 / €801–1500"
@@ -236,16 +355,36 @@ matrix:
       over_five_years: 5
     risk_options:
       no_risk: 7
-      below_average: 2
       average: 1
       above_average: 0
       high: 0
     drop_options:
-      sell_all: 2
-      sell_some: 2
+      sell: 4
       hold: 6
       buy_more: 0
     literacy_mean: 1.73
+    education_options:
+      pradinis: 1
+      vidurinis: 4
+      profesinis: 3
+      aukstasis_koleginis: 1
+      aukstasis_universitetinis: 1
+    employment_options:
+      dirbantis: 5
+      studentas: 0
+      bedarbis: 2
+      pensininkas: 2
+      kita: 1
+    risk_agreement_options:
+      visiskai_nesutinku: 5
+      nesutinku: 3
+      nei_nei: 2
+      sutinku: 0
+      visiskai_sutinku: 0
+    social_trust_mean: 4.0
+    fin_trust_mean: 2.2
+    happiness_mean: 5.5
+    life_satisfaction_mean: 5.5
 
 # ---------------------------------------------------------------------------
 # 6. Question → Form Option Mapping
@@ -254,74 +393,203 @@ matrix:
 # the form HTML.
 # ---------------------------------------------------------------------------
 questions:
-  # Age question
-  age:
-    label: "Jūsų amžius"           # Form question label (for logging)
+  # --- Gender (entry.1850394701) — HIDDEN, pre-set to "Moteris" ---
+  # The bot does NOT interact with this field.
+  gender:
+    label: "Jūsų lytis"
+    entry_id: "1850394701"
+    hidden: true
     option_map:
-      "18-24": "18–24"
-      "25-34": "25–34"
-      "35-44": "35–44"
-      "45-54": "45–54"
+      moteris:           "Moteris"
+      vyras:             "Vyras"
+      nenoriu_nurodyti:  "Nenoriu nurodyti"
 
-  # Income bracket question
+  # --- Age (entry.1041580707) ---
+  age:
+    label: "Jūsų amžius"
+    entry_id: "1041580707"
+    option_map:
+      "18-24":  "18-24"
+      "25-34":  "25-34"
+      "35-44":  "35-44"
+      "45-54":  "45-54"
+      "55-65":  "55-65"
+      "65+":    "65 ir daugiau"
+
+  # --- Education (entry.1026546895) ---
+  education:
+    label: "Jūsų išsilavinimas"
+    entry_id: "1026546895"
+    option_map:
+      pradinis:              "Pradinis"
+      vidurinis:             "Vidurinis"
+      profesinis:            "Profesinis"
+      aukstasis_koleginis:   "Aukštasis koleginis"
+      aukstasis_universitetinis: "Aukštasis universitetinis"
+
+  # --- Employment (entry.1945649336) ---
+  employment:
+    label: "Jūsų užimtumas"
+    entry_id: "1945649336"
+    option_map:
+      dirbantis:   "Dirbantis (-i)"
+      studentas:   "Studentas (-ė)"
+      bedarbis:    "Bedarbis (-ė)"
+      pensininkas: "Pensininkas (-ė)"
+      kita:        "Kita"
+
+  # --- Income (entry.1153800607) ---
   income:
     label: "Jūsų mėnesinės pajamos"
+    entry_id: "1153800607"
     option_map:
-      "under-800":  "iki 800 €"
-      "801-1500":   "801–1500 €"
-      "1501-2500":  "1501–2500 €"
-      "2501-4000":  "2501–4000 €"
-      "4000+":      "daugiau nei 4000 €"
+      "under-800":  "iki 800 eurų"
+      "801-1500":   "801 - 1500 eurų"
+      "1501-2500":  "1501 - 2500 eurų"
+      "2500-4000":  "2500 - 4000 eurų"      # form text starts at 2500, not 2501
+      "4000+":      "daugiau nei 4000 eurų"
+      "nenoriu":    "Nenoriu atsakyti"
 
-  # Current investing status
+  # --- Financial Literacy Q1: Inflation (entry.680265513) ---
+  fin_literacy_q1:
+    label: "Finansinio raštingumo klausimas – infliacija"
+    entry_id: "680265513"
+    option_map:
+      daugiau:     "Daugiau nei šiandien"
+      tiek_pat:    "Tiek pat kaip šiandien"
+      maziau:      "Mažiau nei šiandien"
+      nezinau:     "Atsakymo nežinau"
+    correct_answer: maziau
+
+  # --- Financial Literacy Q2: Investment Fund (entry.793241307) ---
+  fin_literacy_q2:
+    label: "Finansinio raštingumo klausimas – investicinis fondas"
+    entry_id: "793241307"
+    option_map:
+      teisingas:   "Teisingas teiginys"
+      neteisingas: "Neteisingas teiginys"
+      nezinau:     "Atsakymo nežinau"
+    correct_answer: neteisingas
+
+  # --- Financial Literacy Q3: Compound Interest (entry.1298294842) ---
+  fin_literacy_q3:
+    label: "Finansinio raštingumo klausimas – sudėtinės palūkanos"
+    entry_id: "1298294842"
+    option_map:
+      daugiau:  "Daugiau nei 102 eurai"
+      lygiai:   "Lygiai 102 eurai"
+      maziau:   "Mažiau nei 102 eurai"
+      nezinau:  "Atsakymo nežinau"
+    correct_answer: daugiau
+
+  # --- Currently Investing? (entry.367790911) ---
   invests_now:
     label: "Ar šiuo metu investuojate į finansines priemones?"
+    entry_id: "367790911"
     option_map:
       "yes": "Taip"
       "no":  "Ne"
 
-  # IMPORTANT: "neinvestuoju" is tightly controlled via neinvestuoju_max_fraction
+  # --- When First Invested (entry.2030463472) ---
+  # "neinvestuoju" is tightly controlled via neinvestuoju_max_fraction
   first_invest:
     label: "Kada pirmą kartą investavote į finansines priemones?"
+    entry_id: "2030463472"
     option_map:
-      last_year:           "Prieš mažiau nei metus"
-      one_to_three_years:  "Prieš 1–3 metus"
-      three_to_five_years: "Prieš 3–5 metus"
-      over_five_years:     "Prieš daugiau nei 5 metus"
-      neinvestuoju:        "Neinvestuoju"   # kept rare — see constraints above
+      last_year:           "Mažiau nei prieš 1 metus"
+      one_to_three_years:  "Prieš 1-3 metus"
+      three_to_five_years: "Prieš 3-5 metus"
+      over_five_years:     "Daugiau nei prieš 5 metus"
+      neinvestuoju:        "Neinvestuoju"
 
-  # Risk tolerance
+  # --- Risk Tolerance Statement (entry.560908398) ---
   risk:
-    label: "Koks jūsų investicijų rizikos tolerancijos lygis?"
+    label: "Rizikos tolerancija"
+    entry_id: "560908398"
     option_map:
-      no_risk:       "Jokia rizika nepriimtina"
-      below_average: "Žemesnė nei vidutinė rizika"
-      average:       "Vidutinė rizika"
-      above_average: "Aukštesnė nei vidutinė rizika"
-      high:          "Aukšta rizika"
+      high:          "Esu pasirengęs (-usi) prisiimti didelę finansinę riziką, tikėdamasis (-asi) gauti didelę grąžą."
+      above_average: "Esu pasirengęs (-usi) prisiimti didesnę nei vidutinę finansinę riziką, tikėdamasis (-asi) gauti didesnę nei vidutinę grąžą."
+      average:       "Esu pasirengęs (-usi) prisiimti vidutinę finansinę riziką, tikėdamasis (-asi) gauti vidutinę grąžą."
+      no_risk:       "Nesu pasirengęs (-usi) prisiimti jokios finansinės rizikos."
 
-  # Reaction to 20 % portfolio drop
+  # --- Risk Agreement Likert (entry.45324286) ---
+  risk_agreement:
+    label: "Rizikos sutikimo skalė"
+    entry_id: "45324286"
+    option_map:
+      visiskai_nesutinku:  "Visiškai nesutinku"
+      nesutinku:           "Nesutinku"
+      nei_nei:             "Nei sutinku, nei nesutinku"
+      sutinku:             "Sutinku"
+      visiskai_sutinku:    "Visiškai sutinku"
+
+  # --- Drop Reaction (entry.19294154) ---
   drop_reaction:
-    label: "Jei jūsų investicijos per mėnesį sumažėtų 20 %, ką darytumėte?"
+    label: "Jei investicijos sumažėtų 20 %, ką darytumėte?"
+    entry_id: "19294154"
     option_map:
-      sell_all:  "Parduočiau viską"
-      sell_some: "Parduočiau dalį"
-      hold:      "Nieko nedaryčiau, laukčiau"
-      buy_more:  "Pirkčiau daugiau"
+      buy_more:  "Pirkčiau daugiau investicijų"
+      sell:      "Parduočiau dalį ar visas investicijas"
+      hold:      "Nieko nekeisčiau"
 
-  # Financial literacy (self-assessed, 1–3 scale mapped to form options)
-  literacy:
-    label: "Kaip vertinate savo finansinį raštingumą?"
-    option_map:
-      low:    "Žemas"
-      medium: "Vidutinis"
-      high:   "Aukštas"
-    # Score thresholds: <1.7 → low, 1.7–2.4 → medium, >=2.4 → high
-    score_thresholds:
-      medium_min: 1.7
-      high_min: 2.4
-    # Jitter: ±this fraction of the mean is added as noise (0 = no jitter)
-    literacy_jitter: 0.25
+  # --- Social Trust Q1 (entry.619310065) — Linear Scale 0-10 ---
+  social_trust_q1:
+    label: "Socialinis pasitikėjimas – 1 klausimas"
+    entry_id: "619310065"
+    scale_min: 0
+    scale_max: 10
+
+  # --- Social Trust Q2 (entry.618473417) — Linear Scale 0-10 ---
+  social_trust_q2:
+    label: "Socialinis pasitikėjimas – 2 klausimas"
+    entry_id: "618473417"
+    scale_min: 0
+    scale_max: 10
+
+  # --- Social Trust Q3 (entry.1581387851) — Linear Scale 0-10 ---
+  social_trust_q3:
+    label: "Socialinis pasitikėjimas – 3 klausimas"
+    entry_id: "1581387851"
+    scale_min: 0
+    scale_max: 10
+
+  # --- Financial Trust Q1 (entry.962347727) — Linear Scale 1-5 ---
+  fin_trust_q1:
+    label: "Finansinis pasitikėjimas – 1 klausimas"
+    entry_id: "962347727"
+    scale_min: 1
+    scale_max: 5
+
+  # --- Financial Trust Q2 (entry.1284477768) — Linear Scale 1-5 ---
+  fin_trust_q2:
+    label: "Finansinis pasitikėjimas – 2 klausimas"
+    entry_id: "1284477768"
+    scale_min: 1
+    scale_max: 5
+
+  # --- Financial Trust Q3 (entry.503397234) — Linear Scale 1-5 ---
+  fin_trust_q3:
+    label: "Finansinis pasitikėjimas – 3 klausimas"
+    entry_id: "503397234"
+    scale_min: 1
+    scale_max: 5
+
+  # --- Happiness (entry.1208701946) — Linear Scale 0-10 ---
+  happiness:
+    label: "Laimės lygis"
+    entry_id: "1208701946"
+    scale_min: 0
+    scale_max: 10
+
+  # --- Life Satisfaction (entry.1264772327) — Linear Scale 0-10 ---
+  life_satisfaction:
+    label: "Pasitenkinimas gyvenimu"
+    entry_id: "1264772327"
+    scale_min: 0
+    scale_max: 10
+
+  # Literacy jitter: ±this fraction of the literacy_mean is added as noise
+  literacy_jitter: 0.25
 
 # ---------------------------------------------------------------------------
 # 7. Logging
