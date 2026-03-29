@@ -15,6 +15,7 @@ NOTE: The question selectors / XPaths below are marked with TODO comments.
       the real one and map it to the corresponding answer key.
 """
 
+import datetime
 import logging
 import random
 import sys
@@ -121,6 +122,24 @@ def human_pause(cfg: dict) -> None:
         rate.get("field_interaction_delay_max", 1.8),
     )
     time.sleep(delay)
+
+
+def _is_active_hour(start: int, end: int) -> bool:
+    """Return True if the current hour falls within [start, end)."""
+    hour = datetime.datetime.now().hour
+    if start <= end:
+        return start <= hour < end
+    # Wraps midnight, e.g. start=22, end=6 → active 22-23 and 0-5
+    return hour >= start or hour < end
+
+
+def _seconds_until_active(start_hour: int) -> float:
+    """Return seconds from now until *start_hour*:00 today or tomorrow."""
+    now = datetime.datetime.now()
+    target = now.replace(hour=start_hour, minute=0, second=0, microsecond=0)
+    if target <= now:
+        target += datetime.timedelta(days=1)
+    return (target - now).total_seconds()
 
 
 # ---------------------------------------------------------------------------
@@ -285,12 +304,46 @@ def run(config_path: str = "config.yaml", max_submissions: int | None = None) ->
         max_delay,
     )
 
+    # Schedule & burst settings
+    schedule = cfg.get("schedule", {})
+    active_start = schedule.get("active_hours_start", 0)
+    active_end = schedule.get("active_hours_end", 24)
+    burst_chance = schedule.get("burst_chance", 0.0)
+    burst_multiplier = schedule.get("burst_multiplier", 3)
+    log.info(
+        "Schedule: active hours %02d:00–%02d:00 | burst chance %.0f%% (×%d)",
+        active_start, active_end, burst_chance * 100, burst_multiplier,
+    )
+
+    last_burst_hour: int | None = None
+    is_burst = False
     submission_count = 0
 
     while True:
         if max_submissions is not None and submission_count >= max_submissions:
             log.info("Reached max_submissions=%d. Stopping.", max_submissions)
             break
+
+        # --- Active-hours gate ---
+        if not _is_active_hour(active_start, active_end):
+            wait = _seconds_until_active(active_start)
+            log.info(
+                "Outside active hours (%02d:00–%02d:00). Sleeping %.0f s until next window.",
+                active_start, active_end, wait,
+            )
+            time.sleep(wait)
+            continue
+
+        # --- Burst check (re-evaluated each new clock hour) ---
+        current_hour = datetime.datetime.now().hour
+        if current_hour != last_burst_hour:
+            is_burst = random.random() < burst_chance
+            last_burst_hour = current_hour
+            if is_burst:
+                log.info(
+                    "Burst hour activated! Submitting ~%dx faster this hour.",
+                    burst_multiplier,
+                )
 
         driver = build_driver(cfg)
         try:
@@ -323,7 +376,12 @@ def run(config_path: str = "config.yaml", max_submissions: int | None = None) ->
             break
 
         delay = random.uniform(min_delay, max_delay)
-        log.info("Waiting %.1f s before next submission...", delay)
+        if is_burst:
+            delay /= burst_multiplier
+        log.info(
+            "Waiting %.1f s before next submission...%s",
+            delay, " (burst)" if is_burst else "",
+        )
         time.sleep(delay)
 
     log.info(

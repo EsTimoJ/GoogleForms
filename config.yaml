@@ -26,6 +26,18 @@ rate:
   field_interaction_delay_max: 1.8
 
 # ---------------------------------------------------------------------------
+# 2b. Schedule & Burst
+# The bot only submits during active hours. Outside this window it sleeps.
+# A per-hour "burst" chance simulates natural participation spikes.
+# ---------------------------------------------------------------------------
+schedule:
+  active_hours_start: 8        # Begin submissions at 08:00
+  active_hours_end: 22         # Stop submissions at 22:00 (no night activity)
+  # Per-hour probability that submissions run at an elevated rate.
+  burst_chance: 0.10           # 10 % chance each new clock-hour
+  burst_multiplier: 3          # During a burst the rate is multiplied by this
+
+# ---------------------------------------------------------------------------
 # 3. Browser / Selenium
 # ---------------------------------------------------------------------------
 browser:
