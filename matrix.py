@@ -2,16 +2,16 @@
 matrix.py — Answer-profile generator based on the tendency matrix.
 
 The generator follows the causal chain:
-    age + income  →  invest_status  →  risk  →  drop_reaction  →  literacy
+    age + income  →  education + employment  →  invest_status
+    →  first_invest  →  risk  →  risk_agreement  →  drop_reaction
+    →  financial literacy quiz  →  social trust  →  financial trust
+    →  happiness  →  life satisfaction
 
 Usage
 -----
     from matrix import AnswerGenerator
     gen = AnswerGenerator(config)
     profile = gen.generate()
-    # → {"age": "18-24", "income": "801-1500", "invests": True,
-    #     "first_invest": "one_to_three_years", "risk": "average",
-    #     "drop_reaction": "hold", "literacy": "medium"}
 """
 
 import random
@@ -26,6 +26,17 @@ def _weighted_choice(option_map: dict[str, int | float]) -> str:
     keys = [k for k, w in option_map.items() if w > 0]
     weights = [option_map[k] for k in keys]
     return random.choices(keys, weights=weights, k=1)[0]
+
+
+def _clamp(value: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, value))
+
+
+def _jittered_int(mean: float, lo: int, hi: int, jitter_frac: float = 0.30) -> str:
+    """Return a string integer drawn from mean ± jitter, clamped to [lo, hi]."""
+    spread = max((hi - lo) * jitter_frac, 1.0)
+    raw = random.gauss(mean, spread)
+    return str(int(round(_clamp(raw, lo, hi))))
 
 
 class AnswerGenerator:
@@ -59,27 +70,48 @@ class AnswerGenerator:
 
     def generate(self) -> dict[str, str]:
         """
-        Return a dict of answer keys:
-            age, income, invests_now, first_invest,
-            risk, drop_reaction, literacy
+        Return a dict of answer keys covering all 21 form questions.
+        Gender is pre-set as a hidden field and excluded from the profile.
         """
         profile = self._pick_profile()
+        education = self._decide_education(profile)
+        employment = self._decide_employment(profile)
         invests = self._decide_invests(profile)
         first_invest = self._decide_first_invest(profile, invests)
         risk = self._decide_risk(profile, invests)
+        risk_agreement = self._decide_risk_agreement(profile, risk)
         drop = self._decide_drop_reaction(profile, invests, risk)
-        literacy = self._decide_literacy(profile)
+        fl_q1 = self._decide_fin_literacy_q1(profile)
+        fl_q2 = self._decide_fin_literacy_q2(profile)
+        fl_q3 = self._decide_fin_literacy_q3(profile)
+        st_q1, st_q2, st_q3 = self._decide_social_trust(profile)
+        ft_q1, ft_q2, ft_q3 = self._decide_fin_trust(profile)
+        happiness = self._decide_happiness(profile)
+        life_sat = self._decide_life_satisfaction(profile)
 
         answer = {
-            "age":           profile["age_group"],
-            "income":        profile["income_bracket"],
-            "invests_now":   "yes" if invests else "no",
-            "first_invest":  first_invest,
-            "risk":          risk,
-            "drop_reaction": drop,
-            "literacy":      literacy,
-            "_profile_id":   profile["id"],
-            "_profile_label": profile["label"],
+            "age":              profile["age_group"],
+            "education":        education,
+            "employment":       employment,
+            "income":           profile["income_bracket"],
+            "fin_literacy_q1":  fl_q1,
+            "fin_literacy_q2":  fl_q2,
+            "fin_literacy_q3":  fl_q3,
+            "invests_now":      "yes" if invests else "no",
+            "first_invest":     first_invest,
+            "risk":             risk,
+            "risk_agreement":   risk_agreement,
+            "drop_reaction":    drop,
+            "social_trust_q1":  st_q1,
+            "social_trust_q2":  st_q2,
+            "social_trust_q3":  st_q3,
+            "fin_trust_q1":     ft_q1,
+            "fin_trust_q2":     ft_q2,
+            "fin_trust_q3":     ft_q3,
+            "happiness":        happiness,
+            "life_satisfaction": life_sat,
+            "_profile_id":      profile["id"],
+            "_profile_label":   profile["label"],
         }
 
         self._stats["total"] += 1
@@ -102,6 +134,12 @@ class AnswerGenerator:
     def _pick_profile(self) -> dict:
         return random.choices(self._profiles, weights=self._profile_weights, k=1)[0]
 
+    def _decide_education(self, profile: dict) -> str:
+        return _weighted_choice(profile["education_options"])
+
+    def _decide_employment(self, profile: dict) -> str:
+        return _weighted_choice(profile["employment_options"])
+
     def _decide_invests(self, profile: dict) -> bool:
         return random.random() < profile["invest_prob"]
 
@@ -116,15 +154,12 @@ class AnswerGenerator:
             total = self._stats["total"] or 1  # avoid div/0 on first run
             current_fraction = self._stats["neinvestuoju"] / total
             if current_fraction < ceiling:
-                # Randomly decide (50/50) whether to place neinvestuoju here
                 if random.random() < 0.5:
                     return "neinvestuoju"
-            # Non-investor but neinvestuoju quota full → pick earliest bracket
             weights = dict(profile["first_invest_options"])
-            weights.pop("neinvestuoju", None)  # exclude if present
+            weights.pop("neinvestuoju", None)
             return _weighted_choice(weights)
 
-        # Currently invests → pick from time-range options (no neinvestuoju)
         weights = dict(profile["first_invest_options"])
         weights.pop("neinvestuoju", None)
         return _weighted_choice(weights)
@@ -137,45 +172,116 @@ class AnswerGenerator:
         weights = dict(profile["risk_options"])
 
         if not invests:
-            # Boost no_risk and below_average for non-investors
             weights["no_risk"] = weights.get("no_risk", 0) * 1.5 + 1
             weights["high"] = max(0.0, weights.get("high", 0) - 1)
+
+        return _weighted_choice(weights)
+
+    def _decide_risk_agreement(self, profile: dict, risk: str) -> str:
+        """
+        Likert agreement with risk-taking, correlated with risk level.
+        Higher risk tolerance nudges toward agreement; lower toward disagreement.
+        """
+        weights = dict(profile["risk_agreement_options"])
+
+        if risk == "high":
+            weights["visiskai_sutinku"] = weights.get("visiskai_sutinku", 0) * 2 + 1
+            weights["sutinku"] = weights.get("sutinku", 0) * 1.5 + 1
+        elif risk == "above_average":
+            weights["sutinku"] = weights.get("sutinku", 0) * 1.3 + 1
+        elif risk == "no_risk":
+            weights["visiskai_nesutinku"] = weights.get("visiskai_nesutinku", 0) * 2 + 1
+            weights["nesutinku"] = weights.get("nesutinku", 0) * 1.5 + 1
 
         return _weighted_choice(weights)
 
     def _decide_drop_reaction(self, profile: dict, invests: bool, risk: str) -> str:
         """
         Investors + higher risk → tilt toward buy_more.
-        Non-investors + no_risk  → tilt toward hold/sell.
+        Non-investors + no_risk → tilt toward hold/sell.
         """
         weights = dict(profile["drop_options"])
 
         if invests and risk in ("above_average", "high"):
             weights["buy_more"] = weights.get("buy_more", 0) * 1.5 + 1
-            weights["sell_all"] = max(0.0, weights.get("sell_all", 0) - 1)
-        elif not invests and risk in ("no_risk", "below_average"):
+            weights["sell"] = max(0.0, weights.get("sell", 0) - 1)
+        elif not invests and risk == "no_risk":
             weights["hold"] = weights.get("hold", 0) * 1.3 + 1
-            weights["sell_some"] = weights.get("sell_some", 0) * 1.2
+            weights["sell"] = weights.get("sell", 0) * 1.2
             weights["buy_more"] = max(0.0, weights.get("buy_more", 0) - 2)
 
         return _weighted_choice(weights)
 
-    def _decide_literacy(self, profile: dict) -> str:
+    # -- Financial literacy quiz questions --
+
+    def _decide_fin_literacy_q1(self, profile: dict) -> str:
+        """Inflation question. Correct: maziau. Higher literacy → more correct."""
+        return self._literacy_quiz_pick(
+            profile, correct="maziau",
+            wrong_options=["daugiau", "tiek_pat", "nezinau"],
+        )
+
+    def _decide_fin_literacy_q2(self, profile: dict) -> str:
+        """Investment fund question. Correct: neteisingas."""
+        return self._literacy_quiz_pick(
+            profile, correct="neteisingas",
+            wrong_options=["teisingas", "nezinau"],
+        )
+
+    def _decide_fin_literacy_q3(self, profile: dict) -> str:
+        """Compound interest question. Correct: daugiau."""
+        return self._literacy_quiz_pick(
+            profile, correct="daugiau",
+            wrong_options=["lygiai", "maziau", "nezinau"],
+        )
+
+    def _literacy_quiz_pick(
+        self, profile: dict, correct: str, wrong_options: list[str],
+    ) -> str:
         """
-        Add ±jitter noise to the mean literacy score, then bucket into
-        low / medium / high.
+        Pick a quiz answer weighted by literacy_mean.
+        literacy_mean is on a 1–3 scale; higher → more likely correct.
         """
-        lit_cfg = self._q["literacy"]
-        jitter = lit_cfg.get("literacy_jitter", 0.25)
+        jitter = self._q.get("literacy_jitter", 0.25)
         mean = profile["literacy_mean"]
         score = mean + random.uniform(-jitter * mean, jitter * mean)
-        score = max(1.0, min(3.0, score))
+        score = _clamp(score, 1.0, 3.0)
 
-        medium_min = lit_cfg["score_thresholds"]["medium_min"]
-        high_min = lit_cfg["score_thresholds"]["high_min"]
+        # Map score to probability of correct answer: 1→0.25, 3→0.90
+        p_correct = 0.25 + (score - 1.0) * (0.65 / 2.0)
 
-        if score >= high_min:
-            return "high"
-        if score >= medium_min:
-            return "medium"
-        return "low"
+        if random.random() < p_correct:
+            return correct
+
+        # Wrong answer: split evenly among wrong options
+        return random.choice(wrong_options)
+
+    # -- Social trust (three questions, linear scale 0-10) --
+
+    def _decide_social_trust(self, profile: dict) -> tuple[str, str, str]:
+        mean = profile["social_trust_mean"]
+        return (
+            _jittered_int(mean, 0, 10),
+            _jittered_int(mean, 0, 10),
+            _jittered_int(mean, 0, 10),
+        )
+
+    # -- Financial trust (three questions, linear scale 1-5) --
+
+    def _decide_fin_trust(self, profile: dict) -> tuple[str, str, str]:
+        mean = profile["fin_trust_mean"]
+        return (
+            _jittered_int(mean, 1, 5, jitter_frac=0.25),
+            _jittered_int(mean, 1, 5, jitter_frac=0.25),
+            _jittered_int(mean, 1, 5, jitter_frac=0.25),
+        )
+
+    # -- Happiness (linear scale 0-10) --
+
+    def _decide_happiness(self, profile: dict) -> str:
+        return _jittered_int(profile["happiness_mean"], 0, 10)
+
+    # -- Life satisfaction (linear scale 0-10) --
+
+    def _decide_life_satisfaction(self, profile: dict) -> str:
+        return _jittered_int(profile["life_satisfaction_mean"], 0, 10)

@@ -143,19 +143,16 @@ def _seconds_until_active(start_hour: int) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Form filler  (TODO: update selectors after attaching form HTML)
+# Form filler
 # ---------------------------------------------------------------------------
 
 class FormFiller:
     """
     Fills one Google Form submission using a pre-generated answer profile.
 
-    Each _fill_* method corresponds to one form question.  After you attach
-    the Google Form HTML:
-      1. Identify the XPath / CSS selector for each question's radio buttons
-         or dropdown options.
-      2. Replace the TODO placeholder with the real selector.
-      3. Map the answer key to the matching option text via config option_map.
+    Each _fill_* method corresponds to one form question.  Radio buttons are
+    located via their ``data-value`` attribute.  Linear-scale radios are
+    scoped to their question container via the sentinel hidden input.
     """
 
     def __init__(self, driver, cfg: dict):
@@ -168,23 +165,38 @@ class FormFiller:
         return self.q[question_key]["option_map"][answer_key]
 
     def _click_radio_by_text(self, option_text: str) -> None:
-        """
-        Click a radio-button or checkbox whose visible label matches option_text.
-
-        TODO: Replace the XPath below once you attach the form HTML.
-              Google Forms wraps option labels in <span> inside <label>.
-              A typical selector is:
-              //span[contains(@class,'appsMaterialWizToggleRadiogroupEl')]
-                    [normalize-space(text())='<option_text>']
-        """
+        """Click a radio whose data-value matches option_text."""
         from selenium.webdriver.common.by import By
         from selenium.webdriver.support import expected_conditions as EC
         from selenium.webdriver.support.ui import WebDriverWait
 
-        # TODO: Update XPath to match the real form structure
+        escaped = self._xpath_escape(option_text)
+        xpath = f"//div[@data-value={escaped} and @role='radio']"
+        wait = WebDriverWait(self.driver, 10)
+        element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+        element.click()
+
+    @staticmethod
+    def _xpath_escape(text: str) -> str:
+        """Return an XPath-safe string literal, handling quotes."""
+        if "'" not in text:
+            return f"'{text}'"
+        if '"' not in text:
+            return f'"{text}"'
+        # Contains both — use concat()
+        parts = text.split("'")
+        return "concat(" + ",\"'\",".join(f"'{p}'" for p in parts) + ")"
+
+    def _click_scale_radio(self, entry_id: str, value: str) -> None:
+        """Click a numeric radio in a linear-scale question, scoped by entry ID."""
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.webdriver.support.ui import WebDriverWait
+
         xpath = (
-            f"//div[@role='radiogroup']"
-            f"//span[normalize-space(text())='{option_text}']"
+            f"//input[@name='entry.{entry_id}_sentinel']"
+            f"/ancestor::div[contains(@class,'Qr7Oae')]"
+            f"//div[@data-value='{value}' and @role='radio']"
         )
         wait = WebDriverWait(self.driver, 10)
         element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
@@ -200,49 +212,78 @@ class FormFiller:
     # --- Individual question fillers ---
 
     def fill_age(self, profile: dict) -> None:
-        """TODO: verify selector for age question."""
         self._fill_question("age", profile["age"])
 
+    def fill_education(self, profile: dict) -> None:
+        self._fill_question("education", profile["education"])
+
+    def fill_employment(self, profile: dict) -> None:
+        self._fill_question("employment", profile["employment"])
+
     def fill_income(self, profile: dict) -> None:
-        """TODO: verify selector for income question."""
         self._fill_question("income", profile["income"])
 
+    def fill_fin_literacy_q1(self, profile: dict) -> None:
+        self._fill_question("fin_literacy_q1", profile["fin_literacy_q1"])
+
+    def fill_fin_literacy_q2(self, profile: dict) -> None:
+        self._fill_question("fin_literacy_q2", profile["fin_literacy_q2"])
+
+    def fill_fin_literacy_q3(self, profile: dict) -> None:
+        self._fill_question("fin_literacy_q3", profile["fin_literacy_q3"])
+
     def fill_invests_now(self, profile: dict) -> None:
-        """TODO: verify selector for current-investing question."""
         self._fill_question("invests_now", profile["invests_now"])
 
     def fill_first_invest(self, profile: dict) -> None:
-        """
-        TODO: verify selector for 'Kada pirmą kartą investavote?' question.
-        'neinvestuoju' option is kept rare via config constraints.
-        """
         self._fill_question("first_invest", profile["first_invest"])
 
     def fill_risk(self, profile: dict) -> None:
-        """TODO: verify selector for risk-tolerance question."""
         self._fill_question("risk", profile["risk"])
 
+    def fill_risk_agreement(self, profile: dict) -> None:
+        self._fill_question("risk_agreement", profile["risk_agreement"])
+
     def fill_drop_reaction(self, profile: dict) -> None:
-        """TODO: verify selector for market-drop reaction question."""
         self._fill_question("drop_reaction", profile["drop_reaction"])
 
-    def fill_literacy(self, profile: dict) -> None:
-        """TODO: verify selector for financial-literacy question."""
-        self._fill_question("literacy", profile["literacy"])
+    def _fill_scale_question(self, question_key: str, value: str) -> None:
+        """Generic helper for linear-scale questions."""
+        entry_id = self.q[question_key]["entry_id"]
+        logging.debug("  [%s] clicking scale value '%s'", question_key, value)
+        self._click_scale_radio(entry_id, value)
+        human_pause(self.cfg)
+
+    def fill_social_trust_q1(self, profile: dict) -> None:
+        self._fill_scale_question("social_trust_q1", profile["social_trust_q1"])
+
+    def fill_social_trust_q2(self, profile: dict) -> None:
+        self._fill_scale_question("social_trust_q2", profile["social_trust_q2"])
+
+    def fill_social_trust_q3(self, profile: dict) -> None:
+        self._fill_scale_question("social_trust_q3", profile["social_trust_q3"])
+
+    def fill_fin_trust_q1(self, profile: dict) -> None:
+        self._fill_scale_question("fin_trust_q1", profile["fin_trust_q1"])
+
+    def fill_fin_trust_q2(self, profile: dict) -> None:
+        self._fill_scale_question("fin_trust_q2", profile["fin_trust_q2"])
+
+    def fill_fin_trust_q3(self, profile: dict) -> None:
+        self._fill_scale_question("fin_trust_q3", profile["fin_trust_q3"])
+
+    def fill_happiness(self, profile: dict) -> None:
+        self._fill_scale_question("happiness", profile["happiness"])
+
+    def fill_life_satisfaction(self, profile: dict) -> None:
+        self._fill_scale_question("life_satisfaction", profile["life_satisfaction"])
 
     def submit(self) -> None:
-        """
-        Click the form's submit button.
-
-        TODO: Update the selector below after attaching form HTML.
-              Google Forms typically uses a <span> with text 'Pateikti' or
-              'Submit' inside a button element.
-        """
+        """Click the form's submit button."""
         from selenium.webdriver.common.by import By
         from selenium.webdriver.support import expected_conditions as EC
         from selenium.webdriver.support.ui import WebDriverWait
 
-        # TODO: Update XPath for the real submit button
         xpath = "//span[normalize-space(text())='Pateikti']"
         wait = WebDriverWait(self.driver, 10)
         btn = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
@@ -254,23 +295,34 @@ class FormFiller:
     def fill_and_submit(self, profile: dict) -> None:
         """Execute the full filling sequence for one form submission."""
         logging.info(
-            "Filling form — profile: %s | invests: %s | first_invest: %s | "
-            "risk: %s | drop: %s | literacy: %s",
+            "Filling form — profile: %s | invests: %s | risk: %s",
             profile["_profile_label"],
             profile["invests_now"],
-            profile["first_invest"],
             profile["risk"],
-            profile["drop_reaction"],
-            profile["literacy"],
         )
 
+        # Gender is a hidden pre-set field — do NOT interact with it.
+        # Questions are filled in form order.
         self.fill_age(profile)
+        self.fill_education(profile)
+        self.fill_employment(profile)
         self.fill_income(profile)
+        self.fill_fin_literacy_q1(profile)
+        self.fill_fin_literacy_q2(profile)
+        self.fill_fin_literacy_q3(profile)
         self.fill_invests_now(profile)
         self.fill_first_invest(profile)
         self.fill_risk(profile)
+        self.fill_risk_agreement(profile)
         self.fill_drop_reaction(profile)
-        self.fill_literacy(profile)
+        self.fill_social_trust_q1(profile)
+        self.fill_social_trust_q2(profile)
+        self.fill_social_trust_q3(profile)
+        self.fill_fin_trust_q1(profile)
+        self.fill_fin_trust_q2(profile)
+        self.fill_fin_trust_q3(profile)
+        self.fill_happiness(profile)
+        self.fill_life_satisfaction(profile)
         self.submit()
 
 
@@ -396,14 +448,23 @@ def _print_summary(profile: dict, n: int) -> None:
     print(
         f"\n{'─'*50}\n"
         f"  Submission #{n}\n"
-        f"  Profile  : {profile['_profile_label']}\n"
-        f"  Age      : {profile['age']}\n"
-        f"  Income   : {profile['income']}\n"
-        f"  Invests  : {profile['invests_now']}\n"
-        f"  1st inv. : {profile['first_invest']}\n"
-        f"  Risk     : {profile['risk']}\n"
-        f"  Drop     : {profile['drop_reaction']}\n"
-        f"  Literacy : {profile['literacy']}\n"
+        f"  Profile       : {profile['_profile_label']}\n"
+        f"  Age           : {profile['age']}\n"
+        f"  Education     : {profile['education']}\n"
+        f"  Employment    : {profile['employment']}\n"
+        f"  Income        : {profile['income']}\n"
+        f"  Fin.Lit. Q1   : {profile['fin_literacy_q1']}\n"
+        f"  Fin.Lit. Q2   : {profile['fin_literacy_q2']}\n"
+        f"  Fin.Lit. Q3   : {profile['fin_literacy_q3']}\n"
+        f"  Invests       : {profile['invests_now']}\n"
+        f"  1st inv.      : {profile['first_invest']}\n"
+        f"  Risk          : {profile['risk']}\n"
+        f"  Risk agree.   : {profile['risk_agreement']}\n"
+        f"  Drop react.   : {profile['drop_reaction']}\n"
+        f"  Social trust  : {profile['social_trust_q1']}, {profile['social_trust_q2']}, {profile['social_trust_q3']}\n"
+        f"  Fin. trust    : {profile['fin_trust_q1']}, {profile['fin_trust_q2']}, {profile['fin_trust_q3']}\n"
+        f"  Happiness     : {profile['happiness']}\n"
+        f"  Life satisf.  : {profile['life_satisfaction']}\n"
         f"{'─'*50}"
     )
 
