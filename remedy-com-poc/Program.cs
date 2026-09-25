@@ -274,8 +274,8 @@ namespace RemedyComPoc
                 {
                     try
                     {
-                        Console.WriteLine("Trying Marshal.GetActiveObject(\"" + identity + "\")");
-                        app = Marshal.GetActiveObject(identity);
+                        Console.WriteLine("Trying GetActiveObject(\"" + identity + "\")");
+                        app = GetRunningObject(identity);
                         Console.WriteLine("Attached to running instance via GetActiveObject.");
                         return true;
                     }
@@ -924,6 +924,38 @@ namespace RemedyComPoc
         {
             return string.IsNullOrWhiteSpace(value) ? "<none>" : value;
         }
+
+        private static object GetRunningObject(string progId)
+        {
+            Guid clsid;
+            var hr = CLSIDFromProgIDEx(progId, out clsid);
+            if (hr != 0)
+            {
+                hr = CLSIDFromProgID(progId, out clsid);
+                if (hr != 0)
+                {
+                    Marshal.ThrowExceptionForHR(hr);
+                }
+            }
+
+            object activeObject;
+            hr = GetActiveObject(ref clsid, IntPtr.Zero, out activeObject);
+            if (hr != 0)
+            {
+                Marshal.ThrowExceptionForHR(hr);
+            }
+
+            return activeObject;
+        }
+
+        [DllImport("oleaut32.dll", PreserveSig = true)]
+        private static extern int GetActiveObject(ref Guid rclsid, IntPtr reserved, [MarshalAs(UnmanagedType.Interface)] out object ppunk);
+
+        [DllImport("ole32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
+        private static extern int CLSIDFromProgIDEx(string progId, out Guid clsid);
+
+        [DllImport("ole32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
+        private static extern int CLSIDFromProgID(string progId, out Guid clsid);
 
         [DllImport("oleaut32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
         private static extern int LoadRegTypeLib(ref Guid rguid, ushort wVerMajor, ushort wVerMinor, int lcid, out ITypeLib ppTLib);
