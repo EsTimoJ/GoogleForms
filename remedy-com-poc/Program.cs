@@ -545,7 +545,7 @@ namespace RemedyComPoc
             return versions
                 .GroupBy(v => v.RegistryView + "|" + v.VersionText, StringComparer.OrdinalIgnoreCase)
                 .Select(g => g.First())
-                .OrderByDescending(v => v.RegistryView == RegistryView.Registry32)
+                .OrderBy(v => v.RegistryView == preferredView ? 0 : 1)
                 .ThenByDescending(v => v.Major)
                 .ThenByDescending(v => v.Minor)
                 .ToList();
@@ -888,6 +888,11 @@ namespace RemedyComPoc
         {
             if (type == typeof(short))
             {
+                if (fieldId < short.MinValue || fieldId > short.MaxValue)
+                {
+                    throw new ArgumentOutOfRangeException("fieldId", fieldId, "Field ID does not fit in an Int16 parameter.");
+                }
+
                 return (short)fieldId;
             }
 
