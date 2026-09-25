@@ -44,7 +44,7 @@ namespace RemedyComPoc
             ComCandidate connectedCandidate = null;
             foreach (var candidate in filtered)
             {
-                if (!TryConnect(candidate, out app))
+                if (!TryConnect(candidate, options.AllowCreateInstance, out app))
                 {
                     continue;
                 }
@@ -266,7 +266,7 @@ namespace RemedyComPoc
             return view == preferred ? 0 : 1;
         }
 
-        private static bool TryConnect(ComCandidate candidate, out object app)
+        private static bool TryConnect(ComCandidate candidate, bool allowCreateInstance, out object app)
         {
             app = null;
             var identities = new[] { candidate.ProgId, candidate.VersionIndependentProgId, candidate.Clsid }
@@ -288,6 +288,11 @@ namespace RemedyComPoc
                     catch (Exception ex)
                     {
                         Console.WriteLine("GetActiveObject failed: " + ex.GetType().FullName + " - " + ex.Message);
+                    }
+
+                    if (!allowCreateInstance)
+                    {
+                        continue;
                     }
 
                     try
@@ -313,6 +318,11 @@ namespace RemedyComPoc
 
                 Guid guid;
                 if (!Guid.TryParse(identity, out guid))
+                {
+                    continue;
+                }
+
+                if (!allowCreateInstance)
                 {
                     continue;
                 }
@@ -1009,6 +1019,7 @@ namespace RemedyComPoc
             public string FormName { get; private set; }
             public int? FieldId { get; private set; }
             public string SetValue { get; private set; }
+            public bool AllowCreateInstance { get; private set; }
 
             public static Options Parse(string[] args)
             {
@@ -1033,6 +1044,9 @@ namespace RemedyComPoc
                         case "--set-value":
                             options.SetValue = NextValue(args, ref i, arg);
                             break;
+                        case "--allow-create-instance":
+                            options.AllowCreateInstance = true;
+                            break;
                         case "--help":
                         case "/?":
                         case "-h":
@@ -1041,6 +1055,11 @@ namespace RemedyComPoc
                         default:
                             throw new ArgumentException("Unknown argument: " + arg);
                     }
+                }
+
+                if (options.SetValue != null && !options.FieldId.HasValue)
+                {
+                    throw new ArgumentException("--set-value requires --field-id.");
                 }
 
                 return options;
@@ -1071,12 +1090,13 @@ namespace RemedyComPoc
             private static void PrintUsageAndExit()
             {
                 Console.WriteLine("Usage:");
-                Console.WriteLine("  RemedyComPoc.exe [--progid <ProgID>] [--clsid <CLSID>] [--form <FormName>] [--field-id <id>] [--set-value <text>]");
+                Console.WriteLine("  RemedyComPoc.exe [--progid <ProgID>] [--clsid <CLSID>] [--form <FormName>] [--field-id <id>] [--set-value <text>] [--allow-create-instance]");
                 Console.WriteLine();
                 Console.WriteLine("Examples:");
                 Console.WriteLine("  RemedyComPoc.exe");
                 Console.WriteLine("  RemedyComPoc.exe --progid Some.Discovered.ProgId --form \"HPD:Help Desk\"");
                 Console.WriteLine("  RemedyComPoc.exe --progid Some.Discovered.ProgId --form \"HPD:Help Desk\" --field-id 7 --set-value \"COM TEST\"");
+                Console.WriteLine("  RemedyComPoc.exe --progid Some.Discovered.ProgId --allow-create-instance");
                 Environment.Exit(0);
             }
         }
