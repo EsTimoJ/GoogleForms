@@ -120,7 +120,7 @@ namespace RemedyComPoc
             }
 
             return results.Values
-                .OrderByDescending(c => c.RegistryView == RegistryView.Registry32)
+                .OrderBy(c => RegistryViewPreference(c.RegistryView))
                 .ThenBy(c => c.ProgId ?? string.Empty, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(c => c.Clsid ?? string.Empty, StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -254,10 +254,16 @@ namespace RemedyComPoc
             }
 
             return filtered
-                .OrderByDescending(c => c.RegistryView == RegistryView.Registry32)
+                .OrderBy(c => RegistryViewPreference(c.RegistryView))
                 .ThenBy(c => c.ProgId ?? string.Empty, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(c => c.Clsid ?? string.Empty, StringComparer.OrdinalIgnoreCase)
                 .ToList();
+        }
+
+        private static int RegistryViewPreference(RegistryView view)
+        {
+            var preferred = Environment.Is64BitProcess ? RegistryView.Registry64 : RegistryView.Registry32;
+            return view == preferred ? 0 : 1;
         }
 
         private static bool TryConnect(ComCandidate candidate, out object app)
@@ -703,7 +709,7 @@ namespace RemedyComPoc
                     try
                     {
                         ITypeInfo refTypeInfo;
-                        typeInfo.GetRefTypeInfo(typeDesc.lpValue.ToInt32(), out refTypeInfo);
+                        typeInfo.GetRefTypeInfo(unchecked((int)typeDesc.lpValue.ToInt64()), out refTypeInfo);
                         string refName;
                         string refDoc;
                         int refHelpContext;
@@ -1017,7 +1023,7 @@ namespace RemedyComPoc
                             options.FormName = NextValue(args, ref i, arg);
                             break;
                         case "--field-id":
-                            options.FieldId = int.Parse(NextValue(args, ref i, arg));
+                            options.FieldId = ParseFieldId(NextValue(args, ref i, arg));
                             break;
                         case "--set-value":
                             options.SetValue = NextValue(args, ref i, arg);
@@ -1044,6 +1050,17 @@ namespace RemedyComPoc
 
                 index++;
                 return args[index];
+            }
+
+            private static int ParseFieldId(string value)
+            {
+                int fieldId;
+                if (!int.TryParse(value, out fieldId))
+                {
+                    throw new ArgumentException("Invalid value for --field-id: " + value);
+                }
+
+                return fieldId;
             }
 
             private static void PrintUsageAndExit()
