@@ -41,74 +41,82 @@ namespace RemedyComPoc
             Console.WriteLine("Step 2: attempting COM attachment");
 
             object app = null;
+            object window = null;
             ComCandidate connectedCandidate = null;
-            foreach (var candidate in filtered)
+            try
             {
-                if (!TryConnect(candidate, options.AllowCreateInstance, out app))
+                foreach (var candidate in filtered)
                 {
-                    continue;
+                    if (!TryConnect(candidate, options.AllowCreateInstance, out app))
+                    {
+                        continue;
+                    }
+
+                    connectedCandidate = candidate;
+                    break;
                 }
 
-                connectedCandidate = candidate;
-                break;
-            }
+                if (app == null)
+                {
+                    Console.WriteLine("Failed to connect to any discovered candidate.");
+                    return 1;
+                }
 
-            if (app == null)
-            {
-                Console.WriteLine("Failed to connect to any discovered candidate.");
-                return 1;
-            }
+                Console.WriteLine("SUCCESS: connected to Remedy COM");
+                Console.WriteLine("Connected candidate:");
+                Console.WriteLine("  ProgID discovered: " + NullText(connectedCandidate.ProgId));
+                Console.WriteLine("  CLSID discovered: " + NullText(connectedCandidate.Clsid));
+                Console.WriteLine("  TypeLib discovered: " + NullText(connectedCandidate.TypeLibId));
 
-            Console.WriteLine("SUCCESS: connected to Remedy COM");
-            Console.WriteLine("Connected candidate:");
-            Console.WriteLine("  ProgID discovered: " + NullText(connectedCandidate.ProgId));
-            Console.WriteLine("  CLSID discovered: " + NullText(connectedCandidate.Clsid));
-            Console.WriteLine("  TypeLib discovered: " + NullText(connectedCandidate.TypeLibId));
-
-            Console.WriteLine();
-            Console.WriteLine("Step 3: inspecting COM surface");
-            PrintRuntimeMembers(app.GetType(), "Application object");
-            InspectTypeLibrary(connectedCandidate);
-
-            if (string.IsNullOrWhiteSpace(options.FormName))
-            {
                 Console.WriteLine();
-                Console.WriteLine("No --form value supplied, so the tool stops after discovery/inspection.");
-                return 0;
-            }
+                Console.WriteLine("Step 3: inspecting COM surface");
+                PrintRuntimeMembers(app.GetType(), "Application object");
+                InspectTypeLibrary(connectedCandidate);
 
-            Console.WriteLine();
-            Console.WriteLine("Step 4: trying OpenForm");
-            object window;
-            if (!TryOpenForm(app, options.FormName, out window))
-            {
-                return 1;
-            }
-
-            Console.WriteLine("FORM OPEN SUCCESS");
-            Console.WriteLine("Returned COM type: " + window.GetType().FullName);
-
-            Console.WriteLine();
-            Console.WriteLine("Returned window/object inspection");
-            PrintRuntimeMembers(window.GetType(), "Returned form/window");
-
-            if (options.FieldId.HasValue)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Step 5: trying to read a field");
-                TryFieldRead(window, options.FieldId.Value);
-
-                if (options.SetValue != null)
+                if (string.IsNullOrWhiteSpace(options.FormName))
                 {
                     Console.WriteLine();
-                    Console.WriteLine("Step 6: trying to set a field without saving");
-                    TryFieldSet(window, options.FieldId.Value, options.SetValue);
+                    Console.WriteLine("No --form value supplied, so the tool stops after discovery/inspection.");
+                    return 0;
                 }
-            }
 
-            Console.WriteLine();
-            Console.WriteLine("Done.");
-            return 0;
+                Console.WriteLine();
+                Console.WriteLine("Step 4: trying OpenForm");
+                if (!TryOpenForm(app, options.FormName, out window))
+                {
+                    return 1;
+                }
+
+                Console.WriteLine("FORM OPEN SUCCESS");
+                Console.WriteLine("Returned COM type: " + window.GetType().FullName);
+
+                Console.WriteLine();
+                Console.WriteLine("Returned window/object inspection");
+                PrintRuntimeMembers(window.GetType(), "Returned form/window");
+
+                if (options.FieldId.HasValue)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Step 5: trying to read a field");
+                    TryFieldRead(window, options.FieldId.Value);
+
+                    if (options.SetValue != null)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Step 6: trying to set a field without saving");
+                        TryFieldSet(window, options.FieldId.Value, options.SetValue);
+                    }
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("Done.");
+                return 0;
+            }
+            finally
+            {
+                ReleaseComObjectQuietly(window);
+                ReleaseComObjectQuietly(app);
+            }
         }
 
         private static List<ComCandidate> FindCandidates()
@@ -446,6 +454,12 @@ namespace RemedyComPoc
             foreach (var version in FindTypeLibVersions(candidate.RegistryView, candidate.TypeLibId))
             {
                 Console.WriteLine("  Found TypeLib version " + version.VersionText + " (" + version.RegistryView + ")");
+                if (version.RegistryView != candidate.RegistryView)
+                {
+                    Console.WriteLine("    Skipping load from non-connected registry view to avoid cross-view TypeLib binding issues.");
+                    continue;
+                }
+
                 ITypeLib typeLib = null;
 
                 try
@@ -516,7 +530,7 @@ namespace RemedyComPoc
         private static IEnumerable<TypeLibVersion> FindTypeLibVersions(RegistryView preferredView, string typeLibId)
         {
             var versions = new List<TypeLibVersion>();
-            foreach (var view in new[] { preferredView })
+            foreach (var view in new[] { preferredView, preferredView == RegistryView.Registry32 ? RegistryView.Registry64 : RegistryView.Registry32 })
             {
                 try
                 {
@@ -946,6 +960,22 @@ namespace RemedyComPoc
             return string.IsNullOrWhiteSpace(value) ? "<none>" : value;
         }
 
+        private static void ReleaseComObjectQuietly(object value)
+        {
+            if (value == null || !Marshal.IsComObject(value))
+            {
+                return;
+            }
+
+            try
+            {
+                Marshal.FinalReleaseComObject(value);
+            }
+            catch
+            {
+            }
+        }
+
         private static object GetRunningObject(string progId)
         {
 #if NETFRAMEWORK
@@ -979,7 +1009,7 @@ namespace RemedyComPoc
         }
 
 #if !NETFRAMEWORK
-        [DllImport("oleaut32.dll", PreserveSig = true)]
+        [DllImport("oleaut32.dll", EntryPoint = "GetActiveObject", PreserveSig = true)]
         private static extern int GetActiveObject(ref Guid rclsid, IntPtr reserved, [MarshalAs(UnmanagedType.Interface)] out object ppunk);
 
         [DllImport("ole32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
