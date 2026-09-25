@@ -516,7 +516,7 @@ namespace RemedyComPoc
         private static IEnumerable<TypeLibVersion> FindTypeLibVersions(RegistryView preferredView, string typeLibId)
         {
             var versions = new List<TypeLibVersion>();
-            foreach (var view in new[] { preferredView, preferredView == RegistryView.Registry32 ? RegistryView.Registry64 : RegistryView.Registry32 })
+            foreach (var view in new[] { preferredView })
             {
                 try
                 {
@@ -719,7 +719,7 @@ namespace RemedyComPoc
                     try
                     {
                         ITypeInfo refTypeInfo;
-                        typeInfo.GetRefTypeInfo(unchecked((int)typeDesc.lpValue.ToInt64()), out refTypeInfo);
+                        typeInfo.GetRefTypeInfo(ReadHrefType(typeDesc.lpValue), out refTypeInfo);
                         string refName;
                         string refDoc;
                         int refHelpContext;
@@ -948,6 +948,9 @@ namespace RemedyComPoc
 
         private static object GetRunningObject(string progId)
         {
+#if NETFRAMEWORK
+            return Marshal.GetActiveObject(progId);
+#else
             Guid clsid;
             var hr = CLSIDFromProgIDEx(progId, out clsid);
             if (hr != 0)
@@ -967,8 +970,15 @@ namespace RemedyComPoc
             }
 
             return activeObject;
+#endif
         }
 
+        private static int ReadHrefType(IntPtr hrefType)
+        {
+            return IntPtr.Size == 4 ? hrefType.ToInt32() : unchecked((int)hrefType.ToInt64());
+        }
+
+#if !NETFRAMEWORK
         [DllImport("oleaut32.dll", PreserveSig = true)]
         private static extern int GetActiveObject(ref Guid rclsid, IntPtr reserved, [MarshalAs(UnmanagedType.Interface)] out object ppunk);
 
@@ -977,6 +987,7 @@ namespace RemedyComPoc
 
         [DllImport("ole32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
         private static extern int CLSIDFromProgID(string progId, out Guid clsid);
+#endif
 
         [DllImport("oleaut32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
         private static extern int LoadRegTypeLib(ref Guid rguid, ushort wVerMajor, ushort wVerMinor, int lcid, out ITypeLib ppTLib);
